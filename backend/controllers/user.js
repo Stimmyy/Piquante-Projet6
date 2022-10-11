@@ -1,16 +1,18 @@
-const User = require('../models/user');
-const bcrypt = require('bcrypt');
-const jwt = require ('jsonwebtoken');
-const cryptojs = require ('crypto-js');
-require('dotenv').config();
+const User = require('../models/user');   // Utilise le modèle d'utilisateur
+const bcrypt = require('bcrypt');        // Hash de mot de passe
+const jwt = require ('jsonwebtoken');    //Gestion de token
+require('dotenv').config();              // Dotenv pour garder le token secret
 
+
+
+// Signup = Fonction pour enregistrer un utilisateur. Cette fonction va utiliser Bcrypt pour hash le mot de passe.
+// Pas de hash d'email par soucis de praticité si besoin de contacter un utilisateur/vérifier si un utilisateur est enregistré.
 
 exports.signup = (req, res, next) => { 
-    const hashedEmail = cryptojs.HmacSHA512(req.body.email, process.env.SECRET_CRYPTOJS_TOKEN).toString(cryptojs.enc.Base64);
     bcrypt.hash(req.body.password, 10)
     .then(hash => {
         const user = new User({
-            email: hashedEmail,
+            email: req.body.email,
             password: hash
         });
         user.save()
@@ -22,9 +24,11 @@ exports.signup = (req, res, next) => {
 
 };
 
+// Login = Fonction pour connecter un utilisateur. Cette fonction va retrouver une combinaison mail/mot de passe (même hash).
+// La fonction va aussi attribuer un token d'utilisateur qui expirera avec {expiresIn:} (ici 24h)
+
 exports.login = (req, res, next) => {
-    const hashedEmail = cryptojs.HmacSHA512(req.body.email, process.env.SECRET_CRYPTOJS_TOKEN).toString(cryptojs.enc.Base64);
-    User.findOne({email: hashedEmail})
+    User.findOne({email: req.body.email})
     .then(user => {
         if (user === null) {
             res.status(401).json({message: 'Paire identifiant/mot de passe incorrecte'})

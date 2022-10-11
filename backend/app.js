@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const helmet = require ('helmet');
 const path = require('path');
+const session = require('cookie-session');
 
 require('dotenv').config();
 
@@ -29,11 +30,25 @@ app.use((req, res, next) => {
     next();
   });
 
+
+
+const expiryDate = new Date(Date.now() +  3600000); // Expiration réglée à 1h
+app.use(session({
+  name : 'session',
+  secret: process.env.secret_SESSION,
+  cookie: {
+    secure: true,
+    httpOnly: true,
+    domain: 'http://localhost:3000',
+    expires: expiryDate
+  }
+}));
+
 app.use(bodyParser.json());
 
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use('/api/auth', userRoutes);
-app.use('/api/stuff', sauceRoutes);
+app.use('/api/sauces', sauceRoutes);
 
 module.exports = app;
